@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-center py-6">Edit Listing</h1>
+
+<form method="POST" enctype="multipart/form-data"
+      class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow space-y-4">
+    {{ csrf_token() }}
+    
+  <div>
+    <label class="block font-semibold">Title</label>
+    <input type="text" name="title" value="{{ listing.title }}" required
+           class="w-full border px-4 py-2 rounded-md">
+  </div>
+
+  <div>
+    <label class="block font-semibold">Rent ($)</label>
+    <input type="number" name="rent" value="{{ listing.rent }}" required
+           class="w-full border px-4 py-2 rounded-md">
+  </div>
+
+  <div>
+    <label class="block font-semibold">Location</label>
+    <input type="text" name="location" value="{{ listing.location }}" required
+           class="w-full border px-4 py-2 rounded-md">
+  </div>
+
+  <div>
+    <label class="block font-semibold">Tags (comma separated)</label>
+    <input type="text" name="tags" value="{{ listing.tags }}"
+           class="w-full border px-4 py-2 rounded-md">
+  </div>
+
+  <div>
+    <label class="block font-semibold">Update Image (optional)</label>
+    <input type="file" name="image" accept="image/*"
+           class="w-full border px-4 py-2 rounded-md">
+    
+    {% if listing.image %}
+      <p class="text-sm mt-2 text-gray-600">Current Image:</p>
+      <img src="{{ url_for('static', filename='uploads/' ~ listing.image) }}"
+           alt="Listing image" class="h-40 object-cover rounded mt-1">
+    {% endif %}
+  </div>
+
+  <div class="flex justify-between">
+    <a href="{{ url_for('main.dashboard') }}"
+       class="text-blue-500 hover:underline text-sm mt-2">Cancel</a>
+    <button type="submit"
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      Save Changes
+    </button>
+  </div>
+
+</form>
+{% endblock %}

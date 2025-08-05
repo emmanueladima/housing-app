@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-center py-6">Available Listings</h1>
+
+<!-- Filter Subbar -->
+<form method="GET" class="flex flex-wrap gap-4 items-center justify-center px-6 py-4 bg-gray-100 rounded-xl shadow mb-6">
+  <input type="text" name="location" placeholder="Location"
+         class="border px-3 py-2 rounded-md w-40"
+         value="{{ request.args.location or '' }}">
+
+  <!-- Rent Range Slider -->
+  <div class="flex flex-col items-center w-full max-w-xs">
+    <label class="text-sm font-medium mb-1 text-center">
+      Rent Range: $<span id="slider-min">{{ request.args.min_rent or 0 }}</span> – $<span id="slider-max">{{ request.args.max_rent or 5000 }}</span>
+    </label>
+    <div id="rent-slider" class="w-full mb-2"></div>
+    <input type="hidden" name="min_rent" id="min_rent_input">
+    <input type="hidden" name="max_rent" id="max_rent_input">
+  </div>
+
+  <input type="text" name="tag" placeholder="Tag (e.g. clean)"
+         class="border px-3 py-2 rounded-md w-40"
+         value="{{ request.args.tag or '' }}">
+
+  <button type="submit"
+          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+    Filter
+  </button>
+
+  <a href="{{ url_for('main.browse') }}" 
+     class="bg-gray-300 text-black px-4 py-2 rounded-md text-sm hover:bg-gray-400">
+    Clear
+  </a>
+</form>
+
+{% if request.args %}
+<div class="text-center text-sm text-gray-600 mb-4">
+  <p>Showing results
+    {% if request.args.location %}
+      for <strong>location: "{{ request.args.location }}"</strong>
+    {% endif %}
+    {% if request.args.min_rent or request.args.max_rent %}
+      {% if request.args.min_rent and request.args.max_rent %}
+        {% if request.args.location %}, {% endif %}
+        with <strong>rent: ${{ request.args.min_rent }}–${{ request.args.max_rent }}</strong>
+      {% elif request.args.min_rent %}
+        {% if request.args.location %}, {% endif %}
+        with <strong>min rent: ${{ request.args.min_rent }}</strong>
+      {% elif request.args.max_rent %}
+        {% if request.args.location %}, {% endif %}
+        with <strong>max rent: ${{ request.args.max_rent }}</strong>
+      {% endif %}
+    {% endif %}
+    {% if request.args.tag %}
+      {% if request.args.location or request.args.min_rent or request.args.max_rent %}, {% endif %}
+      with <strong>tag: "{{ request.args.tag }}"</strong>
+    {% endif %}
+  </p>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-8 pb-16">
+  {% for listing in listings %}
+  <div class="bg-white border border-gray-300 p-6 rounded-2xl shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5">
+    <div class="relative mb-4">
+  {% if listing.image %}
+    <img src="{{ url_for('static', filename='uploads/' ~ listing.image) }}"
+         alt="Listing image"
+         class="w-full h-48 object-cover rounded">
+  {% endif %}
+
+  <!-- Favorite Button -->
+  <form method="POST"
+      action="{{ url_for('main.favorite' if listing not in current_user.favorites else 'main.unfavorite', listing_id=listing.id) }}"
+      class="absolute top-2 right-2 z-10">
+
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button type="submit"
+          class="transition-transform duration-200 ease-in-out hover:scale-110 active:scale-90">
+    {% if listing in current_user.favorites %}
+      <!-- Filled Heart -->
+      <svg xmlns="http://www.w3.org/2000/svg"
+           class="w-7 h-7 text-pink-500 transition-colors duration-200"
+           fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 21s-6.2-5.8-9.2-9.2C1.1 9.1 1.6 5.8 4.1 4.2 6.2 2.9 8.8 3.4 10.4 5c.6.6 1.1 1.3 1.6 2 .5-.7 1-1.4 1.6-2 1.6-1.6 4.2-2.1 6.3-.8 2.5 1.6 3 4.9 1.3 7.6C18.2 15.2 12 21 12 21z"/>
+      </svg>
+    {% else %}
+      <!-- Outline Heart -->
+      <svg xmlns="http://www.w3.org/2000/svg"
+           class="w-7 h-7 text-gray-400 transition-colors duration-200"
+           fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 21s-6.2-5.8-9.2-9.2C1.1 9.1 1.6 5.8 4.1 4.2 6.2 2.9 8.8 3.4 10.4 5c.6.6 1.1 1.3 1.6 2 .5-.7 1-1.4 1.6-2 1.6-1.6 4.2-2.1 6.3-.8 2.5 1.6 3 4.9 1.3 7.6C18.2 15.2 12 21 12 21z"/>
+      </svg>
+    {% endif %}
+  </button>
+</form>
+</div>
+
+    <h2 class="text-xl font-semibold mb-1">{{ listing.title }}</h2>
+    <p class="text-gray-600">${{ listing.rent }} / month – {{ listing.location }}</p>
+
+    <div class="mt-3 flex flex-wrap gap-2">
+      {% for tag in listing.get_tag_list() %}
+        <span class="bg-gray-100 text-sm px-3 py-1 rounded-full">{{ tag }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" rel="stylesheet">
+<style>
+  .noUi-target {
+    height: 4px !important;
+    background-color: #e5e7eb !important; /* Tailwind gray-200 */
+    border-radius: 9999px !important;
+    border: none !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+  }
+
+  .noUi-connect {
+    background-color: #10b981 !important; /* Tailwind emerald-500 */
+    height: 100% !important;
+    border-radius: 9999px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .noUi-handle {
+    width: 14px !important;
+    height: 14px !important;
+    top: -5px !important;
+    border-radius: 9999px !important;
+    border: 2px solid #10b981 !important;
+    background-color: #fff !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+  }
+
+  .noUi-handle:before,
+  .noUi-handle:after {
+    display: none !important;
+  }
+
+  .noUi-horizontal .noUi-handle {
+    margin-top: 0 !important;
+  }
+
+  /* Optional: hover effect for handle */
+  .noUi-handle:hover {
+    border-color: #059669 !important; /* darker emerald on hover */
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const slider = document.getElementById('rent-slider');
+    const minSpan = document.getElementById('slider-min');
+    const maxSpan = document.getElementById('slider-max');
+    const minInput = document.getElementById('min_rent_input');
+    const maxInput = document.getElementById('max_rent_input');
+
+    const startMin = Number("{{ request.args.min_rent or 0 }}");
+    const startMax = Number("{{ request.args.max_rent or 5000 }}");
+
+    if (slider) {
+      noUiSlider.create(slider, {
+        start: [startMin, startMax],
+        connect: true,
+        step: 50,
+        range: {
+          min: 0,
+          max: 5000
+        },
+        format: {
+          to: value => Math.round(value),
+          from: value => parseInt(value)
+        }
+      });
+
+      slider.noUiSlider.on('update', function (values) {
+        const [min, max] = values;
+        minSpan.textContent = min;
+        maxSpan.textContent = max;
+        minInput.value = min;
+        maxInput.value = max;
+      });
+    }
+  });
+</script>
+{% endblock %}

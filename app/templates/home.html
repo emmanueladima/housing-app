@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="text-center py-20">
+  <h1 class="text-4xl md:text-5xl font-extrabold mb-4">
+    Roommates. Matches. Home.
+  </h1>
+  <p class="text-lg text-gray-500 font-medium">
+    Find your perfect fit, fast.
+  </p>
+
+  <!-- Hero image placeholder -->
+  <div class="mt-12 mx-auto w-4/5 h-72 bg-gray-100 rounded-2xl flex items-center justify-center">
+    <div class="flex space-x-6">
+      <div class="w-16 h-16 bg-white rounded"></div>
+      <div class="w-16 h-16 bg-white rounded-full"></div>
+      <div class="w-16 h-16 bg-white" style="clip-path: polygon(50% 0%, 0% 100%, 100% 100%)"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 px-8 py-12 text-center">
+  <div>
+    <div class="w-20 h-20 mx-auto bg-gray-100 rounded mb-4"></div>
+    <h3 class="text-xl font-bold">Room listings.</h3>
+    <p class="text-gray-500">Find affordable rooms near campus.</p>
+  </div>
+  <div>
+    <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full mb-4"></div>
+    <h3 class="text-xl font-bold">Matchmaking.</h3>
+    <p class="text-gray-500">Get paired with compatible roommates.</p>
+  </div>
+  <div>
+    <div class="w-20 h-20 mx-auto bg-gray-100" style="clip-path: polygon(50% 0%, 0% 100%, 100% 100%)"></div>
+    <h3 class="text-xl font-bold mt-4">Messaging.</h3>
+    <p class="text-gray-500">Chat directly within the app.</p>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1 class="text-3xl font-bold text-center py-6">Post a New Listing</h1>
+
+<form method="POST" action="/post" enctype="multipart/form-data"
+      class="max-w-xl mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 space-y-4">
+    {{ csrf_token() }}
+    
+  <!-- Title -->
+  <div>
+    <label class="block text-gray-700 text-sm font-bold mb-2" for="title">Listing Title</label>
+    <input name="title" id="title" type="text" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+  </div>
+
+  <!-- Rent -->
+  <div>
+    <label class="block text-gray-700 text-sm font-bold mb-2" for="rent">Rent (USD/month)</label>
+    <input name="rent" id="rent" type="number" required min="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+  </div>
+
+  <!-- Location -->
+  <div>
+    <label class="block text-gray-700 text-sm font-bold mb-2" for="location">Location</label>
+    <input name="location" id="location" type="text" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+  </div>
+
+  <!-- Tags -->
+  <div>
+    <label class="block text-gray-700 text-sm font-bold mb-2" for="tags">Tags (comma-separated)</label>
+    <input name="tags" id="tags" type="text" placeholder="e.g. Clean, Night Owl, Non-smoker" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+  </div>
+
+  <!-- Image Upload -->
+<div>
+  <label class="block text-gray-700 text-sm font-bold mb-2" for="image">Upload Image</label>
+  <input name="image" id="image" type="file" accept="image/*"
+         class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0 file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+</div>
+
+  <!-- Submit -->
+  <div class="flex justify-center">
+    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
+      Post Listing
+    </button>
+  </div>
+</form>
+
+{% endblock %}

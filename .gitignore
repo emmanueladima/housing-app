@@ -1,0 +1,22 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.sqlite3
+instance/
+.env
+
+# Flask config
+*.db
+*.log
+*.pot
+
+# VS Code
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Uploads
+app/static/uploads/
+
+
