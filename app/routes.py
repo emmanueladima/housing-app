@@ -14,6 +14,9 @@ def home():
 
 @main.route('/browse')
 def browse():
+    page = request.args.get('page', 1, type=int)
+    per_page = 6  # number of listings per page
+
     listings = Listing.query
 
     location = request.args.get('location')
@@ -30,7 +33,8 @@ def browse():
     if tag:
         listings = listings.filter(Listing.tags.ilike(f'%{tag}%'))
 
-    listings = listings.all()
+    listings = listings.order_by(Listing.id.desc()).paginate(page=page, per_page=per_page)
+
     return render_template('browse.html', title='Browse Listings', listings=listings)
 
 @main.route('/post', methods=['GET', 'POST'])
@@ -107,8 +111,11 @@ def about():
 @main.route('/dashboard')
 @login_required
 def dashboard():
-    user_listings = Listing.query.filter_by(user_id=current_user.id).all()
-    return render_template('dashboard.html', title='Dashboard', listings=user_listings)
+    page = request.args.get('page', 1, type=int)
+    listings = Listing.query.filter_by(user_id=current_user.id)\
+                .order_by(Listing.id.desc())\
+                .paginate(page=page, per_page=6)
+    return render_template('dashboard.html', listings=listings)
 
 @main.route('/delete/<int:listing_id>', methods=['POST'])
 @login_required

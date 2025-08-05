@@ -61,7 +61,7 @@
 {% endif %}
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-8 pb-16">
-  {% for listing in listings %}
+  {% for listing in listings.items %}
   <div class="bg-white border border-gray-300 p-6 rounded-2xl shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5">
     <div class="relative mb-4">
   {% if listing.image %}
@@ -98,6 +98,7 @@
 </form>
 </div>
 
+
     <h2 class="text-xl font-semibold mb-1">{{ listing.title }}</h2>
     <p class="text-gray-600">${{ listing.rent }} / month – {{ listing.location }}</p>
 
@@ -109,6 +110,33 @@
   </div>
   {% endfor %}
 </div>
+
+<!-- Pagination Controls -->
+<div class="flex justify-center mt-8 space-x-2">
+  {% if listings.has_prev %}
+    <a href="{{ url_for('main.browse', page=listings.prev_num, **request.args.to_dict()) }}"
+       class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">&laquo; Prev</a>
+  {% endif %}
+
+  {% for page_num in listings.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=1) %}
+    {% if page_num %}
+      {% if page_num == listings.page %}
+        <span class="px-4 py-2 bg-blue-500 text-white rounded">{{ page_num }}</span>
+      {% else %}
+        <a href="{{ url_for('main.browse', page=page_num, **request.args.to_dict()) }}"
+           class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">{{ page_num }}</a>
+      {% endif %}
+    {% else %}
+      <span class="px-4 py-2 text-gray-400">…</span>
+    {% endif %}
+  {% endfor %}
+
+  {% if listings.has_next %}
+    <a href="{{ url_for('main.browse', page=listings.next_num, **request.args.to_dict()) }}"
+       class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Next &raquo;</a>
+  {% endif %}
+</div>
+
 {% endblock %}
 
 {% block styles %}
