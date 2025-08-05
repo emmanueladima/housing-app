@@ -194,3 +194,8 @@ def unfavorite(listing_id):
 def favorites_page():
     listings = current_user.favorites.all()
     return render_template('favorite.html', listings=listings)
+
+@main.route('/listing/<int:listing_id>')
+def listing_detail(listing_id):
+    listing = Listing.query.get_or_404(listing_id)
+    return render_template('listing_detail.html', listing=listing)
