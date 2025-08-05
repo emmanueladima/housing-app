@@ -18,7 +18,20 @@ A full-stack Flask web application that allows users to post, browse, and favori
 
 ## Setup Instructions
 
-### 1. Clone the repo
 ```bash
-git clone https://github.com/your-username/housing-app.git
+# 1. Clone the repository
+git clone https://github.com/emmanueladima/housing-app.git
 cd housing-app
+
+# 2. Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Run the Flask application
+python run.py
+
+# Now open your browser and visit:
+# http://127.0.0.1:5000/
