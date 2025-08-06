@@ -60,89 +60,195 @@
 </div>
 {% endif %}
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-8 pb-16">
-  {% for listing in listings.items %}
-  <div class="relative group">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const mapEl = document.getElementById("map");
+    if (!mapEl) return;
 
-  <!-- Entire Card as a Link -->
-  <a href="{{ url_for('main.listing_detail', listing_id=listing.id) }}"
-     class="block bg-white border border-gray-300 p-6 rounded-2xl shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5 relative z-10">
+    // Fallback location if no markers
+    const fallbackLat = 44.5646;
+    const fallbackLon = -123.2620;
 
-     <!-- Favorite Button -->
-  <form method="POST"
-        action="{{ url_for('main.favorite' if listing not in current_user.favorites else 'main.unfavorite', listing_id=listing.id) }}"
-        class="absolute top-7 right-8 z-20"
-        onclick="event.stopPropagation(); event.preventDefault(); this.submit();">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit" class="focus:outline-none">
-      {% if listing in current_user.favorites %}
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-pink-500 hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 21s-6.2-5.8-9.2-9.2C1.1 9.1 1.6 5.8 4.1 4.2
-                   6.2 2.9 8.8 3.4 10.4 5c.6.6 1.1 1.3 1.6 2
-                   .5-.7 1-1.4 1.6-2 1.6-1.6 4.2-2.1 6.3-.8
-                   2.5 1.6 3 4.9 1.3 7.6C18.2 15.2 12 21 12 21z"/>
-        </svg>
-      {% else %}
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-gray-400 hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round"
-                d="M12 21s-6.2-5.8-9.2-9.2C1.1 9.1 1.6 5.8 4.1 4.2
-                   6.2 2.9 8.8 3.4 10.4 5c.6.6 1.1 1.3 1.6 2
-                   .5-.7 1-1.4 1.6-2 1.6-1.6 4.2-2.1 6.3-.8
-                   2.5 1.6 3 4.9 1.3 7.6C18.2 15.2 12 21 12 21z"/>
-        </svg>
-      {% endif %}
-    </button>
-  </form>
-
-    {% if listing.image %}
-      <img src="{{ url_for('static', filename='uploads/' ~ listing.image) }}"
-           alt="Listing image"
-           class="w-full h-48 object-cover rounded mb-4">
-    {% endif %}
-
-    <h2 class="text-xl font-semibold mb-1">{{ listing.title }}</h2>
-    <p class="text-gray-600">${{ listing.rent }} / month – {{ listing.location }}</p>
-
-    <div class="mt-3 flex flex-wrap gap-2">
-      {% for tag in listing.get_tag_list() %}
-        <span class="bg-gray-100 text-sm px-3 py-1 rounded-full">{{ tag }}</span>
+    const markerData = [
+      {% for listing in listings.items %}
+        {% if listing.latitude and listing.longitude %}
+          {
+            lat: {{ listing.latitude }},
+            lon: {{ listing.longitude }},
+            title: {{ listing.title|tojson }},
+            rent: {{ listing.rent }},
+            url: "{{ url_for('main.listing_detail', listing_id=listing.id) }}"
+          },
+        {% endif %}
       {% endfor %}
+    ];
+
+    // Initialize map
+    const initialCenter = markerData.length > 0
+      ? [markerData[0].lat, markerData[0].lon]
+      : [fallbackLat, fallbackLon];
+
+    const map = L.map("map").setView(initialCenter, 13);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(map);
+
+    // Add markers
+    markerData.forEach(item => {
+      L.marker([item.lat, item.lon])
+        .addTo(map)
+        .bindPopup(`
+          <strong>${item.title}</strong><br/>
+          $${item.rent} / month<br/>
+          <a href="${item.url}" class="text-blue-600 underline">View</a>
+        `);
+    });
+  });
+</script>
+
+<div class="flex flex-col md:flex-row h-screen overflow-hidden">
+      <!-- Listings Panel -->
+  <div class="w-full md:w-1/2 overflow-y-auto px-6 py-4 space-y-4 min-h-0">
+    {% for listing in listings.items %}
+    <div class="relative group">
+
+      <!-- Listing Card -->
+      <a href="{{ url_for('main.listing_detail', listing_id=listing.id) }}"
+         class="block bg-white border border-gray-300 p-6 rounded-2xl shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5 relative z-10">
+
+        <!-- Favorite Button -->
+        <form method="POST"
+              action="{{ url_for('main.favorite' if listing not in current_user.favorites else 'main.unfavorite', listing_id=listing.id) }}"
+              class="absolute top-7 right-8 z-20"
+              onclick="event.stopPropagation(); event.preventDefault(); this.submit();">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="focus:outline-none">
+            {% if listing in current_user.favorites %}
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-pink-500 hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 21s-6.2-5.8-9.2-9.2C1.1 9.1 1.6 5.8 4.1 4.2
+                         6.2 2.9 8.8 3.4 10.4 5c.6.6 1.1 1.3 1.6 2
+                         .5-.7 1-1.4 1.6-2 1.6-1.6 4.2-2.1 6.3-.8
+                         2.5 1.6 3 4.9 1.3 7.6C18.2 15.2 12 21 12 21z"/>
+              </svg>
+            {% else %}
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-gray-400 hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 21s-6.2-5.8-9.2-9.2C1.1 9.1 1.6 5.8 4.1 4.2
+                         6.2 2.9 8.8 3.4 10.4 5c.6.6 1.1 1.3 1.6 2
+                         .5-.7 1-1.4 1.6-2 1.6-1.6 4.2-2.1 6.3-.8
+                         2.5 1.6 3 4.9 1.3 7.6C18.2 15.2 12 21 12 21z"/>
+              </svg>
+            {% endif %}
+          </button>
+        </form>
+
+        {% if listing.image %}
+          <img src="{{ url_for('static', filename='uploads/' ~ listing.image) }}"
+               alt="Listing image"
+               class="w-full h-48 object-cover rounded mb-4">
+        {% endif %}
+
+        <h2 class="text-xl font-semibold mb-1">{{ listing.title }}</h2>
+        <p class="text-gray-600">${{ listing.rent }} / month – {{ listing.location }}</p>
+
+        <div class="mt-3 flex flex-wrap gap-2">
+          {% for tag in listing.get_tag_list() %}
+            <span class="bg-gray-100 text-sm px-3 py-1 rounded-full">{{ tag }}</span>
+          {% endfor %}
+        </div>
+      </a>
     </div>
-  </a>
-</div>
-  {% endfor %}
-</div>
+    {% endfor %}
 
-<!-- Pagination Controls -->
-<div class="flex justify-center mt-8 space-x-2">
-  {% if listings.has_prev %}
-    <a href="{{ url_for('main.browse', page=listings.prev_num, **request.args.to_dict()) }}"
-       class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">&laquo; Prev</a>
-  {% endif %}
-
-  {% for page_num in listings.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=1) %}
-    {% if page_num %}
-      {% if page_num == listings.page %}
-        <span class="px-4 py-2 bg-blue-500 text-white rounded">{{ page_num }}</span>
-      {% else %}
-        <a href="{{ url_for('main.browse', page=page_num, **request.args.to_dict()) }}"
-           class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">{{ page_num }}</a>
+    <!-- Pagination -->
+    <div class="flex justify-center mt-8 space-x-2">
+      {% if listings.has_prev %}
+        <a href="{{ url_for('main.browse', page=listings.prev_num, **request.args.to_dict()) }}"
+           class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">&laquo; Prev</a>
       {% endif %}
-    {% else %}
-      <span class="px-4 py-2 text-gray-400">…</span>
-    {% endif %}
-  {% endfor %}
 
-  {% if listings.has_next %}
-    <a href="{{ url_for('main.browse', page=listings.next_num, **request.args.to_dict()) }}"
-       class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Next &raquo;</a>
-  {% endif %}
+      {% for page_num in listings.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=1) %}
+        {% if page_num %}
+          {% if page_num == listings.page %}
+            <span class="px-4 py-2 bg-blue-500 text-white rounded">{{ page_num }}</span>
+          {% else %}
+            <a href="{{ url_for('main.browse', page=page_num, **request.args.to_dict()) }}"
+               class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">{{ page_num }}</a>
+          {% endif %}
+        {% else %}
+          <span class="px-4 py-2 text-gray-400">…</span>
+        {% endif %}
+      {% endfor %}
+
+      {% if listings.has_next %}
+        <a href="{{ url_for('main.browse', page=listings.next_num, **request.args.to_dict()) }}"
+           class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Next &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+
+ <!-- Map Panel -->
+<div class="hidden md:block w-1/2 relative h-[calc(100vh-10rem)]">
+  <div id="map" class="absolute inset-0 h-full w-full border before:absolute before:top-0 before:left-0 before:h-full before:w-2 before:shadow-[8px_0_12px_-2px_rgba(0,0,0,0.25)] before:z-10 before:content-[''] rounded-l-2xl"></div></div>
 </div>
 
 {% endblock %}
 
 {% block styles %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" rel="stylesheet">
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-o2Uw7HmnnpwJcUD0LqkZb3xv/Qj3XW50xHcQoos2gEI="
+  crossorigin="">
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const mapEl = document.getElementById("map");
+    if (!mapEl) return;
+
+    // fallback if no listings have coords
+    const fallback = [44.5646, -123.2620];
+    // build markerData in Jinja
+    const markerData = [
+      {% for l in listings.items %}
+        {% if l.latitude and l.longitude %}
+          {
+            lat: {{ l.latitude }},
+            lon: {{ l.longitude }},
+            title: {{ l.title|tojson }},
+            rent: {{ l.rent }},
+            url: "{{ url_for('main.listing_detail', listing_id=l.id) }}"
+          },
+        {% endif %}
+      {% endfor %}
+    ];
+
+    const center = markerData.length
+      ? [markerData[0].lat, markerData[0].lon]
+      : fallback;
+
+    const map = L.map("map").setView(center, 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap contributors"
+    }).addTo(map);
+
+    markerData.forEach(item => {
+      L.marker([item.lat, item.lon])
+        .addTo(map)
+        .bindPopup(
+          `<strong>${item.title}</strong><br>$${item.rent}/mo<br>
+           <a href="${item.url}" class="underline text-blue-600">View</a>`
+        );
+    });
+  });
+</script>
+
 <style>
   .noUi-target {
     height: 4px !important;
@@ -187,6 +293,20 @@
     border-color: #059669 !important; /* darker emerald on hover */
   }
 </style>
+
+<style>
+  /* Lock entire page */
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Optional: prevent scrollbars in body */
+  body {
+    margin: 0;
+  }
+</style>
+
 {% endblock %}
 
 {% block scripts %}
