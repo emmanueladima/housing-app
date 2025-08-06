@@ -5,8 +5,8 @@
 
 <form method="POST" enctype="multipart/form-data"
       class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow space-y-4">
-    {{ csrf_token() }}
-    
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
   <div>
     <label class="block font-semibold">Title</label>
     <input type="text" name="title" value="{{ listing.title }}" required

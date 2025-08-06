@@ -5,7 +5,7 @@
   <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
 
   <form method="POST" action="{{ url_for('main.login') }}">
-    {{ csrf_token() }}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="mb-4">
       <label for="username" class="block text-gray-700">Username</label>
       <input type="text" name="username" required

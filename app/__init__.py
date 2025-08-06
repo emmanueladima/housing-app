@@ -3,7 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 import os 
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
+from flask_mail import Mail
 
+mail = Mail()
 csrf = CSRFProtect()
 
 login_manager = LoginManager()
@@ -20,7 +22,16 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = 'secret-key'  
 
+    app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+    app.config['MAIL_PORT'] = 587
+    app.config['MAIL_USE_TLS'] = True
+    app.config['MAIL_USERNAME'] = 'your_email@gmail.com' #fill in later
+    app.config['MAIL_PASSWORD'] = 'your_app_password'  
+    app.config['MAIL_DEFAULT_SENDER'] = 'your_email@gmail.com'
+
+    mail.init_app(app)
     db.init_app(app)
+    csrf.init_app(app)
 
     from .routes import main
     app.register_blueprint(main)
@@ -36,8 +47,6 @@ def create_app():
             return User.query.get(int(user_id))
 
         login_manager.init_app(app)
-
-        csrf.init_app(app)
     
         @app.context_processor
         def inject_csrf_token():

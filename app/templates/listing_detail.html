@@ -1,35 +1,94 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto py-10 px-6">
-  <div class="bg-white rounded-2xl shadow p-6">
-    {% if listing.image %}
-      <img src="{{ url_for('static', filename='uploads/' ~ listing.image) }}"
-           alt="Listing image"
-           class="w-full h-64 object-cover rounded-xl mb-6">
-    {% endif %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="flex h-[500px] gap-1.5">
+    <!-- Left Main Image -->
+    <div class="w-1/2">
+      <img
+        src="{{ url_for('static', filename='uploads/' ~ listing.image) }}"
+        alt="Main Listing Image"
+        class="w-full h-full object-cover rounded-l-xl"
+      />
+    </div>
 
-    <h1 class="text-3xl font-bold mb-2">{{ listing.title }}</h1>
-    <p class="text-gray-600 text-lg mb-4">${{ listing.rent }} / month – {{ listing.location }}</p>
-
-    <div class="flex flex-wrap gap-2 mb-6">
-      {% for tag in listing.get_tag_list() %}
-        <span class="bg-gray-100 px-3 py-1 text-sm rounded-full">{{ tag }}</span>
+    <!-- Right 2x2 Grid -->
+    <div class="w-1/2 grid grid-cols-2 grid-rows-2 gap-1.5">
+      {% for i in range(4) %}
+        <div>
+          <img
+            src="{{ url_for('static', filename='uploads/' ~ listing.image) }}"
+            alt="Additional Photo"
+            class="w-full h-full object-cover
+              {% if i == 0 %} rounded-tr-none
+              {% elif i == 1 %} rounded-tr-xl
+              {% elif i == 2 %} rounded-br-none
+              {% elif i == 3 %} rounded-br-xl
+              {% endif %}"
+          />
+        </div>
       {% endfor %}
     </div>
-
-    <div>
-      <p class="text-gray-800 leading-relaxed">
-        {{ listing.description or "No additional description provided." }}
-      </p>
-    </div>
-
-    <!-- Placeholder for future Contact Button -->
-    <!--
-    <div class="mt-8">
-      <a href="#" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Contact Owner</a>
-    </div>
-    -->
   </div>
 </div>
+
+    {% if current_user.is_authenticated and current_user.id != listing.user_id %}
+  <div class="mt-6 border-t pt-6">
+    <h3 class="text-lg font-semibold mb-2">Contact the Owner</h3>
+    <form method="POST" action="{{ url_for('main.contact_owner', listing_id=listing.id) }}" class="space-y-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <textarea name="message" rows="4" placeholder="Write your message here..."
+                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+        <button type="submit"
+              class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">
+        Send Message
+      </button>
+    </form>
+  </div>
+{% endif %}
+  </div>
+</div>
+
+<!-- MAP CONTAINER -->
+<h2 class="text-2xl font-bold mt-16 mb-4">Explore the Area</h2>
+<div class="max-w-4xl mx-auto mt-12">
+  <h2 class="text-2xl font-bold mb-4">Explore the Area</h2>
+  <div id="map" class="w-full h-[280px] rounded-2xl border border-gray-200 shadow-sm"></div>
+</div><!-- LEAFLET CSS + JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+<!-- YOUR SCRIPT -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const locationText = "{{ listing.location }}";
+    console.log("Location text:", locationText);
+
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationText)}`, {
+      headers: {
+        "User-Agent": "HousingApp/1.0 (test@example.com)",
+        "Accept-Language": "en"
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        const map = L.map('map').setView([lat, lon], 13);        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        L.marker([lat, lon]).addTo(map).bindPopup(locationText).openPopup();
+      } else {
+        document.getElementById('map').innerHTML = "No results found.";
+      }
+    })
+    .catch(err => {
+      console.error("Map load error:", err);
+      document.getElementById('map').innerHTML = "Failed to load map.";
+    });
+  });
+</script>
+
 {% endblock %}

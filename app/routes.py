@@ -5,7 +5,11 @@ from .models import Listing, User
 from . import db
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from app import Mail
+from app.models import Listing, User
+from flask_mail import Message
 
+mail = Mail()
 main = Blueprint('main', __name__)
 
 @main.route('/')
@@ -89,13 +93,22 @@ def login():
 def register():
     if request.method == 'POST':
         username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
 
+        existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+        if existing_user:
+            flash('Username or email already exists.', 'error')
+            return redirect(url_for('main.register'))
+
         hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
-        new_user = User(username=username, password=hashed_pw)
+        new_user = User(username=username, email=email, password=hashed_pw)
         db.session.add(new_user)
         db.session.commit()
+
+        flash('Registration successful! You can now log in.', 'success')
         return redirect(url_for('main.login'))
+
     return render_template('register.html')
 
 @main.route('/logout')
@@ -199,3 +212,31 @@ def favorites_page():
 def listing_detail(listing_id):
     listing = Listing.query.get_or_404(listing_id)
     return render_template('listing_detail.html', listing=listing)
+
+@main.route('/contact_owner/<int:listing_id>', methods=['POST'])
+@login_required
+def contact_owner(listing_id):
+    listing = Listing.query.get_or_404(listing_id)
+    owner = listing.user
+
+    if not owner.email:
+        flash("Listing owner has no email.", "error")
+        return redirect(url_for('main.listing_detail', listing_id=listing_id))
+
+    msg = Message(
+        subject=f"Inquiry about: {listing.title}",
+        recipients=[owner.email],
+        body=f"""
+Hi {owner.username},
+
+{current_user.username} is interested in your listing "{listing.title}" located at {listing.location}.
+
+You can contact them back at: {current_user.email}
+
+Regards,
+Housing App
+"""
+    )
+    mail.send(msg)
+    flash("Your message has been sent to the listing owner!", "success")
+    return redirect(url_for('main.listing_detail', listing_id=listing_id))
